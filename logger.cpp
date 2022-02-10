@@ -5,8 +5,10 @@
 
 Logger* Logger::m_instance = nullptr;
 
+const QString path("/logApp");
+
 Logger::Logger():
-    m_fileLog(QString("log %1 %2.txt")
+    m_fileLog(QString("%1/log %2 %3.txt").arg(path)
                 .arg(QDateTime::currentDateTime().date().toString(QString("dd:MM:yyyy")))
                 .arg(QDateTime::currentDateTime().time().toString(QString("hh:mm:ss")))
               )
@@ -32,7 +34,10 @@ Logger::~Logger()
 Logger* Logger::instance()
 {
     if(m_instance == nullptr )
+    {
+        system(QString("mkdir -p %1").arg(path));
         m_instance = new Logger();
+    }
 
     return m_instance;
 }
