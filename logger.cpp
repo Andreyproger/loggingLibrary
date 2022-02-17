@@ -35,7 +35,7 @@ Logger* Logger::instance()
 {
     if(m_instance == nullptr )
     {
-        system(QString("mkdir -p %1").arg(path));
+        system(QString("mkdir -p %1").arg(path).toUtf8().data());
         m_instance = new Logger();
     }
 
@@ -65,9 +65,7 @@ void Logger::setType(MsgType type)
 
 bool Logger::openFile()
 {
-    if(m_fileLog.open(QIODevice::WriteOnly))
-        return true;
-    else return false;
+    return (m_fileLog.open(QIODevice::WriteOnly));
 }
 
 Logger::MsgType Logger::type()
@@ -90,10 +88,10 @@ void Logger::messageHandler(MsgType typeMessage, const QString& message, LogMode
     }
 }
 
-void Logger::writeToConsole(MsgType typeMessage, const QString& message)
+QString Logger::makeMessage(MsgType typeMessage, const QString& message) const
 {
     QString messageType;
-
+    
     if(MsgType::debugMsg == typeMessage)
         messageType = "[Debug] ";
     if(MsgType::warningMsg == typeMessage)
@@ -102,16 +100,22 @@ void Logger::writeToConsole(MsgType typeMessage, const QString& message)
         messageType = "[Info] ";
     if(MsgType::fatalMsg == typeMessage)
         messageType = "[Fatal] ";
-    if(MsgType::criticalMsg == typeMessage || MsgType::systemMsg == typeMessage)
+    if((MsgType::criticalMsg == typeMessage) || (MsgType::systemMsg == typeMessage))
         messageType = "[System] ";
-
-    QString debugString = QString("[%1 %2] %3\n\t\t function name: [%4]\n\t\t description: %5")
+    
+    return QString("[%1 %2] %3\n\t\t function name: [%4]\n\t\t description: %5\n")
             .arg(QDateTime::currentDateTime().date().toString(QString("dd:MM:yyyy")))
             .arg(QDateTime::currentDateTime().time().toString(QString("hh:mm:ss")))
             .arg(messageType)
             .arg(__func__)
             .arg(message);
-    qDebug() << debugString;
+}
+
+void Logger::writeToConsole(MsgType typeMessage, const QString& message)
+{
+    qDebug() << makeMessage(typeMessage, message);
+    if((MsgType::fatalMsg || MsgType::criticalMsg == typeMessage || MsgType::systemMsg == typeMessage) == typeMessage)
+        throw "Application aborted!!!";
 }
 
 void Logger::writeToFile(MsgType typeMessage, const QString& message)
@@ -121,30 +125,13 @@ void Logger::writeToFile(MsgType typeMessage, const QString& message)
         if(!openFile())
             return;
     }
-
-    m_fileLog.write("[");
-    m_fileLog.write(QDateTime::currentDateTime().date().toString(QString("dd:MM:yyyy")).toUtf8() + QString(" ").toUtf8());
-    m_fileLog.write(QDateTime::currentDateTime().time().toString(QString("hh:mm:ss")).toUtf8());
-    m_fileLog.write("] ");
-    if(MsgType::debugMsg == typeMessage)
-        m_fileLog.write("[Debug] ");
-    if(MsgType::warningMsg == typeMessage)
-        m_fileLog.write("[Warning] ");
-    if(MsgType::infoMsg == typeMessage)
-        m_fileLog.write("[Info] ");
-    if(MsgType::fatalMsg == typeMessage)
-        m_fileLog.write("[Fatal] ");
-    if(MsgType::systemMsg == typeMessage)
+    m_fileLog.write(makeMessage(typeMessage, message).toUtf8());
+    if((MsgType::fatalMsg || MsgType::criticalMsg == typeMessage || MsgType::systemMsg == typeMessage) == typeMessage)
     {
-        m_fileLog.write("[System] ");
-        m_fileLog.write(message.toUtf8()+"\n");
-        m_fileLog.write("\n Application ABORT");
         m_fileLog.flush();
         m_fileLog.close();
-        abort();
+        throw "Application aborted!!!";
     }
-
-    m_fileLog.write(message.toUtf8()+"\n");
 }
 
 void Logger::InfoLogFile(const QString& message)
