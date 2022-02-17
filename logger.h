@@ -47,6 +47,8 @@ private:
     void setMode(LogMode mode);
     void writeToFile(MsgType typeMessage, const QString& message);
     void writeToConsole(MsgType typeMessage, const QString&);
+    QString makeMessage(MsgType typeMessage, const QString&) const;
+    
 private:
     LogMode mode();
     MsgType type();
