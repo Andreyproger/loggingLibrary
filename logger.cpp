@@ -5,10 +5,12 @@
 
 Logger* Logger::m_instance = nullptr;
 
-const QString path("/logApp");
+const QString AbortedMessage("Application aborted!!!");
+
+const QString Path("/logApp");
 
 Logger::Logger():
-    m_fileLog(QString("%1/log %2 %3.txt").arg(path)
+    m_fileLog(QString("%1/log %2 %3.txt").arg(Path)
                 .arg(QDateTime::currentDateTime().date().toString(QString("dd:MM:yyyy")))
                 .arg(QDateTime::currentDateTime().time().toString(QString("hh:mm:ss")))
               )
@@ -35,7 +37,7 @@ Logger* Logger::instance()
 {
     if(m_instance == nullptr )
     {
-        system(QString("mkdir -p %1").arg(path).toUtf8().data());
+        system(QString("mkdir -p %1").arg(Path).toUtf8().data());
         m_instance = new Logger();
     }
 
@@ -115,7 +117,7 @@ void Logger::writeToConsole(MsgType typeMessage, const QString& message)
 {
     qDebug() << makeMessage(typeMessage, message);
     if((MsgType::fatalMsg || MsgType::criticalMsg == typeMessage || MsgType::systemMsg == typeMessage) == typeMessage)
-        throw "Application aborted!!!";
+        throw AbortedMessage;
 }
 
 void Logger::writeToFile(MsgType typeMessage, const QString& message)
@@ -128,9 +130,10 @@ void Logger::writeToFile(MsgType typeMessage, const QString& message)
     m_fileLog.write(makeMessage(typeMessage, message).toUtf8());
     if((MsgType::fatalMsg || MsgType::criticalMsg == typeMessage || MsgType::systemMsg == typeMessage) == typeMessage)
     {
+        m_fileLog.write(AbortedMessage.toUtf8());
         m_fileLog.flush();
         m_fileLog.close();
-        throw "Application aborted!!!";
+        throw AbortedMessage;
     }
 }
 

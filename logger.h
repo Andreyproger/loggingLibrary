@@ -50,9 +50,9 @@ private:
     QString makeMessage(MsgType typeMessage, const QString&) const;
     
 private:
-    LogMode mode();
-    MsgType type();
-    QString fileName() const;
+    inline LogMode mode();
+    inline MsgType type();
+    inline QString fileName() const;
 
 private:
     static Logger* m_instance;
